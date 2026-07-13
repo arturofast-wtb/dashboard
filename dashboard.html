@@ -396,3 +396,146 @@ function renderPozos(){
     if(p.bpd)bpdSum+=p.bpd;
     const op=p.notas.includes('Oxy')?'Oxy':'Permian Resources';
     if(!opMap[op]){opMap[op]={s:0,n:0};}opMap[op].s+=p.bpd||0;opMap[op].n++;
+    tb.innerHTML+=`<tr><td class="mn">${p.id}</td><td>${p.notas}</td><td>${pill(p.estado)}</td><td class="mn">${fmt(p.bpd)}</td><td>${p.quimico}</td><td>Bombeo</td><td class="mn">${p.hora}</td><td style="font-size:10px;color:var(--smoke)"></td></tr>`;
+  });
+  const avg=S.pozos.length?Math.round(bpdSum/S.pozos.length):0;
+  set('ov-inj',actCnt+'/'+S.pozos.length);
+  set('loc-act',actCnt+'<span class="ku">/'+S.pozos.length+'</span>');
+  set('loc-psi',avg.toLocaleString()+'<span class="ku">QT/D</span>');
+  set('loc-vol',bpdSum.toLocaleString()+'<span class="ku">QT/D</span>');
+  set('loc-al',alCnt);
+  set('poz-badge',S.pozos.length+' pozos');
+  const fg=document.getElementById('fld-g');fg.innerHTML='';
+  Object.entries(opMap).forEach(([op,d])=>{
+    const pct=Math.round(d.s/4600*100);
+    fg.innerHTML+=`<div><div class="gh"><span class="gn">${op}</span><span class="gv">${d.s.toLocaleString()} QT/D</span></div><div class="gbar"><div class="gfill gfg" style="width:${Math.min(pct,100)}%"></div></div></div>`;
+  });
+}
+function renderMezclas(){
+  const kmap={Completada:'kn-done','En Proceso':'kn-wip','Por Hacer':'kn-todo','En Espera':'kn-hold'};
+  Object.values(kmap).forEach(id=>{document.getElementById(id).innerHTML='';});
+  const cnt={Completada:0,'En Proceso':0,'Por Hacer':0,'En Espera':0};
+  let bblDone=0;
+  S.mezclas.forEach(m=>{
+    cnt[m.estado]=(cnt[m.estado]||0)+1;
+    if(m.estado==='Completada')bblDone+=(m.bbl||m.vol||0);
+    const card=`<div class="mc"><div class="mi">${m.id}</div><div class="mn2">${m.nombre}</div><div class="mm"><span class="mt">📦 ${m.vol||0} GAL</span><span class="mt">🕐 ${m.turno}</span>${m.notas?`<span class="mt">📝 ${m.notas}</span>`:''}</div></div>`;
+    document.getElementById(kmap[m.estado]||'kn-hold').innerHTML+=card;
+  });
+  set('knd',cnt.Completada);set('knw',cnt['En Proceso']);set('knt',cnt['Por Hacer']);set('knh',cnt['En Espera']||0);
+  set('mx-done',cnt.Completada);set('mx-wip',cnt['En Proceso']);set('mx-todo',cnt['Por Hacer']);
+  set('mx-bbl',bblDone+'<span class="ku">GAL</span>');
+  set('ov-mix',cnt.Completada+cnt['En Proceso']);
+  set('ov-mix-n',cnt.Completada+' completada / '+cnt['Por Hacer']+' por hacer');
+  if(!cnt.Completada)document.getElementById('kn-done').innerHTML='<div class="empty"><div class="ei">—</div><div class="em">Sin completadas aun</div></div>';
+  if(!cnt['Por Hacer'])document.getElementById('kn-todo').innerHTML='<div class="empty"><div class="ei">✓</div><div class="em">Cola vacia</div></div>';
+}
+function renderInventario(){
+  const g=document.getElementById('inv-gauges');const tb=document.getElementById('inv-tbody');
+  g.innerHTML='';tb.innerHTML='';
+  let ok=0,cr=0,lw=0,minD=999;
+  S.inventario.forEach(item=>{
+    const dias=item.consumoDia>0?Math.round(item.stock/item.consumoDia):99;
+    if(dias<minD)minD=dias;
+    const est=item.nivel<item.min?'Critico':item.nivel<item.min*1.5?'Bajo':'OK';
+    if(est==='Critico')cr++;else if(est==='Bajo')lw++;else ok++;
+    const col=gcol(item.nivel);
+    g.innerHTML+=`<div><div class="gh"><span class="gn">${item.nombre} — ${item.desc}</span><span class="gv">${item.nivel}%  ·  ${fmtN(item.stock)} ${item.unidad}</span></div><div class="gbar"><div class="gfill ${col}" style="width:${Math.min(item.nivel,100)}%"></div></div></div>`;
+    const ep=est==='Critico'?'<span class="p pr">Critico</span>':est==='Bajo'?'<span class="p pa">Bajo</span>':'<span class="p pg">OK</span>';
+    tb.innerHTML+=`<tr><td><b style="color:var(--white)">${item.nombre}</b><br><span style="font-size:10px;color:var(--smoke)">${item.desc}</span></td><td class="mn">${item.nivel}%</td><td class="mn">${fmtN(item.stock)} ${item.unidad}</td><td class="mn">${fmtN(item.consumoDia)}/dia</td><td class="mn" style="${dias<3?'color:var(--crimson)':dias<7?'color:var(--amber)':''}">${dias} dias</td><td>${ep}</td></tr>`;
+  });
+  set('inv-ok',ok);set('inv-cr',cr);set('inv-lw',lw);
+  set('inv-con','~'+minD+'<span class="ku">dias</span>');
+  set('inv-al-b',cr>0?cr+' critico'+(cr>1?'s':''):lw>0?lw+' bajo'+(lw>1?'s':''):'Todo OK');
+}
+function renderTareas(){
+  const over=[],hoy=[],sem=[],dn=[];
+  S.tareas.forEach(t=>{if(t.estado==='Vencida')over.push(t);else if(t.estado==='Hoy')hoy.push(t);else if(t.estado==='Semana')sem.push(t);else if(t.estado==='Completada')dn.push(t);});
+  const c={'Alta':'var(--crimson)','Media':'var(--amber)','Baja':'var(--steel)'};
+  const card=t=>`<div class="ci"><div class="ca" style="background:${c[t.prioridad]||'var(--wire)'}"></div><div class="cl"><div class="cn">${t.titulo}</div><div class="cm">${t.desc}${t.asignado?' · '+t.asignado:''} · ${t.rol}</div></div><div class="cr"><div class="cv">${pill(t.prioridad)}</div><div class="cs">${t.vence}</div></div></div>`;
+  ['t-over','t-today','t-week'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});
+  over.forEach(t=>{const e=document.getElementById('t-over');if(e)e.innerHTML+=card(t);});
+  hoy.forEach(t=>{const e=document.getElementById('t-today');if(e)e.innerHTML+=card(t);});
+  sem.forEach(t=>{const e=document.getElementById('t-week');if(e)e.innerHTML+=card(t);});
+  if(!over.length){const e=document.getElementById('t-over');if(e)e.innerHTML='<div class="empty"><div class="ei">✅</div><div class="em">Sin tareas vencidas</div></div>';}
+  if(!hoy.length){const e=document.getElementById('t-today');if(e)e.innerHTML='<div class="empty"><div class="ei">📅</div><div class="em">Sin tareas para hoy</div></div>';}
+  if(!sem.length){const e=document.getElementById('t-week');if(e)e.innerHTML='<div class="empty"><div class="ei">📅</div><div class="em">Sin tareas esta semana</div></div>';}
+  const ov=document.getElementById('ov-tasks-list');if(ov){ov.innerHTML='';over.concat(hoy).slice(0,4).forEach(t=>ov.innerHTML+=card(t));if(!over.length&&!hoy.length)ov.innerHTML='<div class="empty"><div class="ei">✅</div><div class="em">Sin urgentes</div></div>';}
+  set('t-ov',over.length);set('t-hoy',hoy.length);set('t-sem',sem.length);set('t-dn',dn.length);
+  set('ov-tasks',over.length+hoy.length+sem.length);set('ov-tasks-n',over.length+' vencidas');
+  set('t-ov-b',over.length+' tareas');set('t-hoy-b',hoy.length+' tareas');set('t-sem-b',sem.length+' tareas');
+  set('urg-badge',over.length+hoy.length+' urgentes');
+}
+function renderComercial(){
+  const tb=document.getElementById('com-tbody');tb.innerHTML='';
+  let tot=0,prop=0,fw=0;
+  S.comercial.forEach(p=>{
+    tot+=p.valor||0;
+    if(p.etapa==='Propuesta Economica')prop++;
+    if(p.etapa==='Recotizacion')fw++;
+    tb.innerHTML+=`<tr><td><b style="color:var(--white)">${p.cliente}</b></td><td>${p.servicio}</td><td class="mn">${fmtUSD(p.valor)}</td><td>${p.etapa}</td><td style="font-size:11px;color:var(--smoke)">${p.accion}</td><td class="mn">${p.fecha}</td><td>${pill(p.estado)}</td></tr>`;
+  });
+  const m=tot>=1000000?(tot/1e6).toFixed(1)+'M':tot>0?'$'+tot.toLocaleString():'$0';
+  set('com-tot',S.comercial.length);set('com-val',tot>0?'$'+m:'$0');
+  set('com-prop',prop);set('com-fw',fw);
+  set('com-badge',S.comercial.length+' Activos');set('ov-com',S.comercial.length);
+}
+function renderUpdates(){
+  const h=document.getElementById('upd-hist');
+  if(!S.updates.length){h.innerHTML='<div class="empty"><div class="ei">💬</div><div class="em">Envia tu primer mensaje</div></div>';return;}
+  h.innerHTML='';
+  [...S.updates].reverse().forEach(u=>{h.innerHTML+=`<div class="ur"><div class="ut">${u.time}</div><div class="ux">${u.summary}</div></div>`;});
+  set('upd-badge',S.updates.length+' hoy');
+}
+function updateTicker(){
+  const items=[];
+  S.pozos.filter(p=>p.estado==='Alerta'||p.estado==='Atencion').forEach(p=>items.push(`⚠ ${p.id} · ${p.bpd} QT/D · ${p.estado.toUpperCase()}`));
+  S.mezclas.filter(m=>m.estado==='En Proceso').forEach(m=>items.push(`🔀 ${m.id} ${m.nombre.toUpperCase()} · EN PROCESO`));
+  S.inventario.filter(i=>i.nivel<i.min).forEach(i=>items.push(`📦 ${i.nombre.toUpperCase()} ${i.nivel}% · NIVEL CRITICO`));
+  S.tareas.filter(t=>t.estado==='Vencida').forEach(t=>items.push(`⏰ TAREA VENCIDA: ${t.titulo.toUpperCase()}`));
+  S.comercial.filter(p=>p.estado==='Cierre').forEach(p=>items.push(`💼 CIERRE PROXIMO: ${p.cliente.toUpperCase()}`));
+  if(!items.length)items.push('✅ OXY FALCON RIDGE T1/T2/T3 — HALEY — TODOS ACTIVOS · PRO3 INYECTANDO');
+  const d=[...items,...items];
+  document.getElementById('ticker').innerHTML=d.map(i=>`<span class="ti">${i}</span><span class="ts">|</span>`).join('');
+}
+function renderAll(){renderPozos();renderMezclas();renderInventario();renderTareas();renderComercial();renderUpdates();updateTicker();}
+async function sendSMS(){
+  const inp=document.getElementById('sms-in');
+  const btn=document.getElementById('sms-btn');
+  const st=document.getElementById('sms-st');
+  const msg=inp.value.trim();
+  if(!msg){st.textContent='⚠ Escribe un mensaje primero.';st.className='sms-st err';return;}
+  btn.disabled=true;st.textContent='Procesando con IA…';st.className='sms-st load';
+  const SYS=`Eres el sistema de actualizacion de un dashboard operacional para West Texas Blending y Q2 Technologies.
+El usuario manda mensajes cortos con actualizaciones de campo en español.
+Devuelve SOLO JSON valido, sin texto adicional, sin backticks.
+Estado actual: Pozos:${JSON.stringify(S.pozos.map(p=>({id:p.id,estado:p.estado,bpd:p.bpd})))} Mezclas:${JSON.stringify(S.mezclas.map(m=>({id:m.id,nombre:m.nombre,estado:m.estado})))} Inventario:${JSON.stringify(S.inventario.map(i=>({nombre:i.nombre,nivel:i.nivel,stock:i.stock})))} Tareas:${JSON.stringify(S.tareas.map(t=>({id:t.id,titulo:t.titulo,estado:t.estado})))} Comercial:${JSON.stringify(S.comercial.map(c=>({cliente:c.cliente,servicio:c.servicio,estado:c.estado})))}
+Formato: {"summary":"resumen 1 linea","updates":{"pozos":[{"id":"Falcon Ridge T1","estado":"Activo","bpd":1200,"quimico":"Pro3","hora":"HH:MM","notas":"Bombeo — Oxy"}],"mezclas":[{"id":"MX-001","nombre":"Pro3","vol":500,"ratio":"—","turno":"—","estado":"Completada","bbl":500,"notas":""}],"inventario":[{"nombre":"Pro3","nivel":75,"stock":800,"unidad":"GAL","consumoDia":0,"min":20}],"tareas_add":[{"titulo":"...","desc":"...","prioridad":"Alta","asignado":"","vence":"Hoy","estado":"Hoy","rol":"Field"}],"tareas_done":[1],"comercial_add":[{"cliente":"...","servicio":"...","valor":0,"etapa":"Propuesta Economica","accion":"...","fecha":"—","estado":"En Propuesta"}]}}
+Solo incluye arrays con cambios. Estados pozos: Activo/Alerta/Atencion/Mant. Estados mezclas: Completada/En Proceso/Por Hacer/En Espera. Prioridad: Alta/Media/Baja.`;
+  try{
+    const r=await fetch("https://arturo.arturo-fast.workers.dev/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:SYS,messages:[{role:"user",content:msg}]})});
+    const data=await r.json();
+    const raw=data.content?.[0]?.text||'';
+    let parsed;
+    try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}
+    catch(e){throw new Error('Respuesta inesperada. Intenta de nuevo.');}
+    apply(parsed,msg);inp.value='';st.textContent='✓ '+parsed.summary;st.className='sms-st ok';
+  }catch(e){st.textContent='⚠ '+e.message;st.className='sms-st err';}
+  btn.disabled=false;
+}
+function apply(parsed,original){
+  const u=parsed.updates||{};
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false,timeZone:'America/Chicago'}).slice(0,5);
+  if(u.pozos?.length)u.pozos.forEach(upd=>{const i=S.pozos.findIndex(p=>p.id===upd.id);if(i>=0)Object.assign(S.pozos[i],upd);else S.pozos.push(upd);});
+  if(u.mezclas?.length)u.mezclas.forEach(upd=>{const i=S.mezclas.findIndex(m=>m.id===upd.id);if(i>=0)Object.assign(S.mezclas[i],upd);else S.mezclas.push(upd);});
+  if(u.inventario?.length)u.inventario.forEach(upd=>{const i=S.inventario.findIndex(x=>x.nombre===upd.nombre);if(i>=0)Object.assign(S.inventario[i],upd);else S.inventario.push(upd);});
+  if(u.tareas_add?.length){const maxId=S.tareas.reduce((m,t)=>Math.max(m,t.id),0);u.tareas_add.forEach((t,i)=>S.tareas.push({...t,id:maxId+i+1}));}
+  if(u.tareas_done?.length)u.tareas_done.forEach(id=>{const t=S.tareas.find(t=>t.id===id);if(t)t.estado='Completada';});
+  if(u.comercial_add?.length)u.comercial_add.forEach(p=>S.comercial.push(p));
+  S.updates.push({time:now,msg:original,summary:parsed.summary});
+  renderAll();saveS();
+}
+(async()=>{await loadS();renderAll();})();
+</script>
+</body>
+</html>
