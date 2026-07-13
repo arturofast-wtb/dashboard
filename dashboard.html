@@ -687,7 +687,7 @@ Solo incluye los arrays que cambian. Estados pozos: Activo/Alerta/Atención/Mant
 
   try{
     const r=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},
+      method:"POST",headers:{"Content-Type":"application/json","x-api-key":"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","anthropic-version":"2023-06-01"},
       body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:SYS,messages:[{role:"user",content:msg}]})
     });
     const data=await r.json();
