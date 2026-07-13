@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WTB & Q2 — Ops Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B0F14;--ink2:#131920;--ink3:#1A2330;--wire:#1E2D3F;--wire2:#2A3D52;--flame:#E8670A;--flame2:#FF8C38;--steel:#2E6BAD;--steel2:#5A9DD5;--lime:#22C97A;--amber:#F0B429;--crimson:#E03C3C;--smoke:#8B9CB0;--fog:#C5D4E5;--white:#EDF2F7;--fd:'Bebas Neue',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--ink);color:var(--white);font-family:var(--fb);min-height:100vh;overflow-x:hidden;}
+.ticker-wrap{background:var(--flame);height:26px;overflow:hidden;display:flex;align-items:center;}
+.ticker-inner{display:flex;gap:0;white-space:nowrap;animation:tkr 50s linear infinite;}
+@keyframes tkr{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{padding:0 36px;font-family:var(--fm);font-size:11px;color:#fff;letter-spacing:.4px;}
+.ts{color:rgba(255,255,255,.35);padding:0 4px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;background:var(--ink2);border-bottom:1px solid var(--wire);}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand-name{font-family:var(--fd);font-size:24px;letter-spacing:2px;line-height:1;}
+.bsep{width:1px;height:28px;background:var(--wire2);}
+.btags{display:flex;flex-direction:column;gap:3px;}
+.btag{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:1px 6px;border-radius:2px;}
+.bt-wtb{background:rgba(232,103,10,.2);color:var(--flame2);border:1px solid rgba(232,103,10,.3);}
+.bt-q2{background:rgba(46,107,173,.2);color:var(--steel2);border:1px solid rgba(46,107,173,.3);}
+.topbar-r{display:flex;align-items:center;gap:14px;}
+.live-pill{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--lime);}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 6px var(--lime);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.clk{font-family:var(--fm);font-size:12px;color:var(--smoke);}
+.utag{background:var(--ink3);border:1px solid var(--wire2);padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;color:var(--fog);}
+/* SMS */
+.sms-panel{background:linear-gradient(135deg,#0D1B2A,#0B1820);border-bottom:2px solid var(--flame);padding:12px 24px;}
+.sms-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.sms-icon{font-size:22px;flex-shrink:0;}
+.sms-lbl{flex-shrink:0;}
+.sms-title{font-family:var(--fd);font-size:15px;letter-spacing:1px;}
+.sms-sub{font-size:10px;color:var(--smoke);margin-top:1px;}
+.sms-iw{flex:1;min-width:260px;display:flex;gap:8px;}
+.sms-input{flex:1;background:var(--ink3);border:1px solid var(--wire2);border-radius:4px;padding:8px 12px;font-family:var(--fb);font-size:13px;color:var(--white);outline:none;transition:border-color .2s;}
+.sms-input:focus{border-color:var(--flame);}
+.sms-input::placeholder{color:var(--smoke);}
+.sms-btn{background:var(--flame);color:#fff;border:none;padding:8px 18px;border-radius:4px;font-family:var(--fd);font-size:14px;letter-spacing:.8px;cursor:pointer;transition:background .2s;white-space:nowrap;}
+.sms-btn:hover{background:var(--flame2);}
+.sms-btn:disabled{background:var(--wire2);cursor:not-allowed;}
+.ex-wrap{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.ex{background:rgba(232,103,10,.08);border:1px solid rgba(232,103,10,.2);border-radius:3px;padding:3px 9px;font-size:10px;color:var(--smoke);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.ex:hover{background:rgba(232,103,10,.15);color:var(--flame2);}
+.sms-st{width:100%;font-size:11px;margin-top:3px;padding:0 2px;}
+.sms-st.ok{color:var(--lime);}.sms-st.err{color:var(--crimson);}.sms-st.load{color:var(--amber);}
+/* TABS */
+.tabs{display:flex;align-items:flex-end;padding:0 24px;background:var(--ink2);border-bottom:1px solid var(--wire);overflow-x:auto;gap:2px;}
+.tab{padding:11px 18px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.4px;color:var(--smoke);white-space:nowrap;transition:all .2s;}
+.tab:hover{color:var(--white);}
+.tab.on{color:var(--flame);border-bottom-color:var(--flame);}
+.tab-s{font-size:9px;font-weight:400;display:block;margin-top:2px;color:var(--wire2);}
+.tab.on .tab-s{color:rgba(232,103,10,.5);}
+/* MAIN */
+.main{padding:18px 24px;max-width:1500px;}
+.sec{display:none;}.sec.on{display:block;}
+.sh{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;}
+.sh-t{font-family:var(--fd);font-size:26px;letter-spacing:1.5px;}
+.sh-l{flex:1;height:1px;background:var(--wire);margin-bottom:3px;}
+.co{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:2px;}
+.co-w{background:rgba(232,103,10,.1);color:var(--flame);border:1px solid rgba(232,103,10,.25);}
+.co-q{background:rgba(46,107,173,.1);color:var(--steel2);border:1px solid rgba(46,107,173,.25);}
+/* KPI */
+.ks{display:grid;gap:11px;margin-bottom:16px;}
+.c4{grid-template-columns:repeat(4,1fr);}
+.c5{grid-template-columns:repeat(5,1fr);}
+.c6{grid-template-columns:repeat(6,1fr);}
+.kpi{background:var(--ink2);border:1px solid var(--wire);border-radius:5px;padding:13px 15px;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kf::after{background:var(--flame);}.kg::after{background:var(--lime);}.kb::after{background:var(--steel);}.ka::after{background:var(--amber);}.kr::after{background:var(--crimson);}
+.kl{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--smoke);margin-bottom:7px;}
+.kv{font-family:var(--fd);font-size:34px;letter-spacing:1px;line-height:1;}
+.ku{font-size:12px;font-family:var(--fb);font-weight:400;color:var(--smoke);margin-left:3px;}
+.kn{font-size:11px;color:var(--smoke);margin-top:5px;}
+/* PANEL */
+.panel{background:var(--ink2);border:1px solid var(--wire);border-radius:5px;overflow:hidden;margin-bottom:12px;}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;background:var(--ink3);border-bottom:1px solid var(--wire);}
+.pt{font-family:var(--fd);font-size:15px;letter-spacing:.8px;}
+.badge{padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.4px;}
+.bf{background:rgba(232,103,10,.15);color:var(--flame2);}.bg{background:rgba(34,201,122,.15);color:var(--lime);}
+.bb{background:rgba(46,107,173,.15);color:var(--steel2);}.ba{background:rgba(240,180,41,.15);color:var(--amber);}
+.br{background:rgba(224,60,60,.15);color:var(--crimson);}
+.pb{padding:14px;}
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.g65{display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px;}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--smoke);font-weight:600;padding:7px 11px;text-align:left;border-bottom:1px solid var(--wire);}
+.tbl td{padding:8px 11px;font-size:12px;color:var(--fog);border-bottom:1px solid rgba(30,45,63,.4);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.012);}
+.mn{font-family:var(--fm);font-size:11px;}
+/* PILLS */
+.p{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:.3px;}
+.pg{background:rgba(34,201,122,.12);color:var(--lime);}
+.pa{background:rgba(240,180,41,.12);color:var(--amber);}
+.pr{background:rgba(224,60,60,.12);color:var(--crimson);}
+.pb2{background:rgba(46,107,173,.12);color:var(--steel2);}
+.pf{background:rgba(232,103,10,.12);color:var(--flame2);}
+/* GAUGES */
+.gauges{display:flex;flex-direction:column;gap:11px;}
+.gh{display:flex;justify-content:space-between;margin-bottom:4px;}
+.gn{font-size:11px;color:var(--smoke);}.gv{font-family:var(--fm);font-size:11px;color:var(--white);}
+.gbar{height:5px;background:var(--wire);border-radius:3px;overflow:hidden;}
+.gfill{height:100%;border-radius:3px;}
+.gff{background:var(--flame);}.gfg{background:var(--lime);}.gfa{background:var(--amber);}.gfr{background:var(--crimson);}.gfb{background:var(--steel);}
+/* LOG */
+.log{display:flex;flex-direction:column;}
+.lr{display:flex;gap:11px;padding:8px 0;border-bottom:1px solid rgba(30,45,63,.4);}
+.lr:last-child{border-bottom:none;}
+.lt{font-family:var(--fm);font-size:10px;color:var(--smoke);min-width:44px;padding-top:2px;}
+.ld{width:6px;height:6px;border-radius:50%;margin-top:3px;flex-shrink:0;}
+.lx{font-size:11px;color:var(--fog);line-height:1.5;}
+.lx b{color:var(--white);}
+/* CARDS */
+.card-list{display:flex;flex-direction:column;gap:7px;}
+.ci{background:var(--ink3);border:1px solid var(--wire);border-radius:4px;padding:9px 13px;display:flex;align-items:flex-start;gap:10px;}
+.cl{flex:1;}.cn{font-size:12px;font-weight:600;color:var(--white);margin-bottom:2px;}.cm{font-size:10px;color:var(--smoke);}
+.cr{flex-shrink:0;text-align:right;}.cv{font-family:var(--fm);font-size:11px;color:var(--fog);}.cs{font-size:10px;color:var(--smoke);margin-top:1px;}
+.ca{width:3px;border-radius:2px;align-self:stretch;flex-shrink:0;}
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.kc{background:var(--ink3);border:1px solid var(--wire);border-radius:5px;overflow:hidden;}
+.kch{padding:9px 13px;border-bottom:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;}
+.kct{font-family:var(--fd);font-size:13px;letter-spacing:.6px;}
+.kcb{padding:9px;display:flex;flex-direction:column;gap:7px;min-height:70px;}
+.mc{background:var(--ink2);border:1px solid var(--wire);border-radius:4px;padding:9px 11px;}
+.mi{font-family:var(--fm);font-size:10px;color:var(--smoke);margin-bottom:3px;}
+.mn2{font-size:11px;font-weight:600;color:var(--white);}
+.mm{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.mt{font-size:10px;color:var(--smoke);}
+/* MAP */
+.map-wrap{background:var(--ink3);border-radius:4px;height:250px;position:relative;overflow:hidden;}
+.mg{position:absolute;inset:0;background-image:linear-gradient(rgba(46,107,173,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(46,107,173,.05) 1px,transparent 1px);background-size:28px 28px;}
+.mp{position:absolute;}
+.mdot{width:9px;height:9px;border-radius:50%;animation:blink 2.5s infinite;}
+.mlbl{position:absolute;left:13px;top:-4px;font-family:var(--fm);font-size:10px;color:var(--smoke);white-space:nowrap;}
+.mleg{position:absolute;bottom:9px;right:11px;display:flex;gap:10px;}
+.mli{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--smoke);}
+.mld{width:6px;height:6px;border-radius:50%;}
+/* EMPTY */
+.empty{text-align:center;padding:28px 14px;color:var(--smoke);}
+.ei{font-size:26px;margin-bottom:6px;}.em{font-size:11px;}
+/* SCROLL */
+.scroll{max-height:280px;overflow-y:auto;}
+.scroll::-webkit-scrollbar{width:3px;}
+.scroll::-webkit-scrollbar-thumb{background:var(--wire);border-radius:2px;}
+/* UPDATE HISTORY */
+.uh{display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;}
+.ur{display:flex;gap:8px;padding:5px 8px;border-radius:3px;background:var(--ink3);}
+.ut{font-family:var(--fm);font-size:10px;color:var(--smoke);min-width:40px;}
+.ux{font-size:11px;color:var(--fog);}
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .c5,.c6{grid-template-columns:repeat(3,1fr);}
+  .c4{grid-template-columns:repeat(2,1fr);}
+  .g65,.g2,.g3{grid-template-columns:1fr;}
+  .kanban{grid-template-columns:1fr;}
+}
+@media(max-width:700px){
+  .topbar,.sms-panel,.main{padding-left:12px;padding-right:12px;}
+  .tabs{padding:0 12px;}
+  .c4,.c5,.c6{grid-template-columns:1fr 1fr;}
+  .ex-wrap{display:none;}
+  .brand-name{font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker-wrap"><div class="ticker-inner" id="ticker"></div></div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-name">OPS CENTER</div>
+    <div class="bsep"></div>
+    <div class="btags">
+      <span class="btag bt-wtb">WEST TEXAS BLENDING</span>
+      <span class="btag bt-q2">Q2 TECHNOLOGIES</span>
+    </div>
+  </div>
+  <div class="topbar-r">
+    <div class="live-pill"><div class="ldot"></div>LIVE</div>
+    <div class="clk" id="clock">—</div>
+    <div class="utag">Plant Mgr · Process · Project · Field</div>
+  </div>
+</header>
+
+<!-- SMS UPDATE PANEL -->
+<div class="sms-panel">
+  <div class="sms-inner">
+    <div class="sms-icon">💬</div>
+    <div class="sms-lbl">
+      <div class="sms-title">ACTUALIZAR POR SMS / WHATSAPP</div>
+      <div class="sms-sub">Escribe en lenguaje natural — la IA interpreta y actualiza el dashboard al instante</div>
+    </div>
+    <div class="sms-iw">
+      <input class="sms-input" id="sms-in" type="text"
+        placeholder="Ej: WTX-12 ya está en 2900 psi. Mezcla BL-2241 completada. Tarea: revisar compresor mañana."
+        onkeydown="if(event.key==='Enter')sendSMS()">
+      <button class="sms-btn" id="sms-btn" onclick="sendSMS()">ENVIAR</button>
+    </div>
+    <div class="ex-wrap">
+      <div class="ex" onclick="fillEx(this)">📍 NM-03 activo 2850 psi flujo 300 bpd</div>
+      <div class="ex" onclick="fillEx(this)">✅ Mezcla BL-2242 completada 490 BBL</div>
+      <div class="ex" onclick="fillEx(this)">📋 Tarea: auditoría SOP viernes prioridad alta</div>
+      <div class="ex" onclick="fillEx(this)">💼 Nuevo cliente: XTO Energy, stimulation $95K</div>
+      <div class="ex" onclick="fillEx(this)">📦 Surfactant recibido 2000 GAL, nivel ahora 65%</div>
+    </div>
+    <div class="sms-st" id="sms-st"></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab on" onclick="goTab('overview',this)">Overview<span class="tab-s">Todos los roles</span></button>
+  <button class="tab" onclick="goTab('comercial',this)">Proyectos Comerciales<span class="tab-s">Pipeline & Pendientes</span></button>
+  <button class="tab" onclick="goTab('mezclas',this)">Mezclas<span class="tab-s">Hechas / Por Hacer</span></button>
+  <button class="tab" onclick="goTab('locaciones',this)">Locaciones TX & NM<span class="tab-s">Inyección Químico</span></button>
+  <button class="tab" onclick="goTab('tareas',this)">Tareas Pendientes<span class="tab-s">Equipo</span></button>
+  <button class="tab" onclick="goTab('inventario',this)">Inventario<span class="tab-s">Estimado</span></button>
+</nav>
+
+<main class="main">
+
+<!-- ══ OVERVIEW ══ -->
+<section class="sec on" id="s-overview">
+  <div class="sh"><span class="sh-t">OPERATIONS OVERVIEW</span><div class="sh-l"></div><span class="co co-w">WTB</span><span class="co co-q">Q2</span></div>
+  <div class="ks c6">
+    <div class="kpi kf"><div class="kl">Eficiencia Planta</div><div class="kv" id="ov-eff">94.2<span class="ku">%</span></div><div class="kn" id="ov-eff-n">↑ +1.8%</div></div>
+    <div class="kpi kg"><div class="kl">Inyección Activa</div><div class="kv" id="ov-inj">23<span class="ku">/26</span></div><div class="kn">TX + NM</div></div>
+    <div class="kpi kb"><div class="kl">Proyectos Comerciales</div><div class="kv" id="ov-com">5</div><div class="kn" id="ov-com-n">pendientes de cierre</div></div>
+    <div class="kpi ka"><div class="kl">Mezclas Hoy</div><div class="kv" id="ov-mix">4</div><div class="kn" id="ov-mix-n">—</div></div>
+    <div class="kpi kr"><div class="kl">Tareas Pendientes</div><div class="kv" id="ov-tasks">8</div><div class="kn" id="ov-tasks-n">2 vencidas</div></div>
+    <div class="kpi kg"><div class="kl">Días sin Incidentes</div><div class="kv" id="ov-safe">143</div><div class="kn">Safety record</div></div>
+  </div>
+  <div class="g65">
+    <div class="panel">
+      <div class="ph"><span class="pt">LOCACIONES TX & NM</span><span class="badge bf">LIVE</span></div>
+      <div style="padding:10px;">
+        <div class="map-wrap"><div class="mg"></div><div id="map-ov"></div>
+          <div class="mleg">
+            <div class="mli"><div class="mld" style="background:var(--lime)"></div>Activo</div>
+            <div class="mli"><div class="mld" style="background:var(--amber)"></div>Atención</div>
+            <div class="mli"><div class="mld" style="background:var(--crimson)"></div>Alerta</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="panel" style="flex:1;">
+        <div class="ph"><span class="pt">MENSAJES ENVIADOS</span><span class="badge bg" id="upd-badge">0 hoy</span></div>
+        <div style="padding:10px 14px;"><div class="uh" id="upd-hist"><div class="empty"><div class="ei">💬</div><div class="em">Envía tu primer mensaje</div></div></div></div>
+      </div>
+      <div class="panel" style="flex:1;">
+        <div class="ph"><span class="pt">TAREAS URGENTES</span><span class="badge br" id="urg-badge">—</span></div>
+        <div style="padding:10px 14px;"><div class="card-list" id="ov-tasks-list"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PROYECTOS COMERCIALES ══ -->
+<section class="sec" id="s-comercial">
+  <div class="sh"><span class="sh-t">PROYECTOS COMERCIALES</span><div class="sh-l"></div><span class="co co-q">Q2 Technologies</span></div>
+  <div class="ks c4">
+    <div class="kpi kb"><div class="kl">Pipeline Total</div><div class="kv" id="com-tot">5</div><div class="kn">proyectos activos</div></div>
+    <div class="kpi kg"><div class="kl">Valor Estimado</div><div class="kv" id="com-val">$1.2<span class="ku">M</span></div><div class="kn">en negociación</div></div>
+    <div class="kpi ka"><div class="kl">En Propuesta</div><div class="kv" id="com-prop">2</div><div class="kn">cotización enviada</div></div>
+    <div class="kpi kf"><div class="kl">Follow-up Esta Sem.</div><div class="kv" id="com-fw">3</div><div class="kn">contactar</div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">PIPELINE COMERCIAL</span><span class="badge bb" id="com-badge">—</span></div>
+    <div style="padding:0;">
+      <table class="tbl">
+        <thead><tr><th>Cliente</th><th>Servicio</th><th>Valor Est.</th><th>Etapa</th><th>Próxima Acción</th><th>Fecha</th><th>Estado</th></tr></thead>
+        <tbody id="com-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MEZCLAS ══ -->
+<section class="sec" id="s-mezclas">
+  <div class="sh"><span class="sh-t">MEZCLAS — PLANTA WTB</span><div class="sh-l"></div><span class="co co-w">West Texas Blending</span></div>
+  <div class="ks c4">
+    <div class="kpi kg"><div class="kl">Completadas Hoy</div><div class="kv" id="mx-done">0</div><div class="kn" id="mx-done-n">—</div></div>
+    <div class="kpi kf"><div class="kl">En Proceso</div><div class="kv" id="mx-wip">0</div><div class="kn">turno actual</div></div>
+    <div class="kpi kb"><div class="kl">Por Hacer</div><div class="kv" id="mx-todo">0</div><div class="kn">en cola</div></div>
+    <div class="kpi ka"><div class="kl">BBL Producidos</div><div class="kv" id="mx-bbl">0<span class="ku">BBL</span></div><div class="kn">completadas hoy</div></div>
+  </div>
+  <div class="kanban">
+    <div class="kc"><div class="kch"><span class="kct">✅ COMPLETADAS</span><span class="badge bg" id="knd">0</span></div><div class="kcb" id="kn-done"></div></div>
+    <div class="kc"><div class="kch"><span class="kct">⚙️ EN PROCESO</span><span class="badge bf" id="knw">0</span></div><div class="kcb" id="kn-wip"></div></div>
+  </div>
+  <div class="kanban">
+    <div class="kc"><div class="kch"><span class="kct">📋 POR HACER</span><span class="badge bb" id="knt">0</span></div><div class="kcb" id="kn-todo"></div></div>
+    <div class="kc"><div class="kch"><span class="kct">⏸ EN ESPERA</span><span class="badge ba" id="knh">0</span></div><div class="kcb" id="kn-hold"></div></div>
+  </div>
+</section>
+
+<!-- ══ LOCACIONES ══ -->
+<section class="sec" id="s-locaciones">
+  <div class="sh"><span class="sh-t">LOCACIONES DE INYECCIÓN</span><div class="sh-l"></div><span class="co co-q">Texas & New Mexico</span></div>
+  <div class="ks c4">
+    <div class="kpi kg"><div class="kl">Puntos Activos</div><div class="kv" id="loc-act">23<span class="ku">/26</span></div><div class="kn">TX + NM</div></div>
+    <div class="kpi kf"><div class="kl">Presión Promedio</div><div class="kv" id="loc-psi">2,934<span class="ku">psi</span></div><div class="kn" id="loc-psi-n">+42 psi vs ayer</div></div>
+    <div class="kpi kb"><div class="kl">Vol. Inyectado Hoy</div><div class="kv" id="loc-vol">1,248<span class="ku">BBL</span></div><div class="kn">↑ +5.2%</div></div>
+    <div class="kpi kr"><div class="kl">Alertas Presión</div><div class="kv" id="loc-al">2</div><div class="kn">revisión requerida</div></div>
+  </div>
+  <div class="g65">
+    <div class="panel">
+      <div class="ph"><span class="pt">MAPA DE LOCACIONES</span><span class="badge bg">Live</span></div>
+      <div style="padding:10px;">
+        <div class="map-wrap" style="height:270px;"><div class="mg"></div><div id="map-loc"></div>
+          <div class="mleg">
+            <div class="mli"><div class="mld" style="background:var(--lime)"></div>Activo</div>
+            <div class="mli"><div class="mld" style="background:var(--amber)"></div>Atención</div>
+            <div class="mli"><div class="mld" style="background:var(--crimson)"></div>Alerta</div>
+            <div class="mli"><div class="mld" style="background:var(--smoke)"></div>Mant.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="pt">PRESIÓN POR CAMPO</span></div>
+      <div class="pb"><div class="gauges" id="fld-g"></div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">DETALLE DE POZOS</span><span class="badge bb" id="poz-badge">—</span></div>
+    <div style="padding:0;"><div class="scroll">
+      <table class="tbl">
+        <thead><tr><th>Well ID</th><th>Campo</th><th>Estado</th><th>Presión (psi)</th><th>Flujo (BPD)</th><th>Químico</th><th>Vol. Mes (BBL)</th><th>Última Lectura</th><th>Notas</th></tr></thead>
+        <tbody id="poz-tbody"></tbody>
+      </table>
+    </div></div>
+  </div>
+</section>
+
+<!-- ══ TAREAS ══ -->
+<section class="sec" id="s-tareas">
+  <div class="sh"><span class="sh-t">TAREAS PENDIENTES</span><div class="sh-l"></div><span class="co co-w">WTB</span><span class="co co-q">Q2</span></div>
+  <div class="ks c4">
+    <div class="kpi kr"><div class="kl">Vencidas</div><div class="kv" id="t-ov">2</div><div class="kn">requieren atención</div></div>
+    <div class="kpi ka"><div class="kl">Para Hoy</div><div class="kv" id="t-hoy">3</div><div class="kn">en plazo</div></div>
+    <div class="kpi kb"><div class="kl">Esta Semana</div><div class="kv" id="t-sem">5</div><div class="kn">próximas</div></div>
+    <div class="kpi kg"><div class="kl">Completadas</div><div class="kv" id="t-dn">12</div><div class="kn">esta semana</div></div>
+  </div>
+  <div class="g2">
+    <div class="panel">
+      <div class="ph"><span class="pt">🔴 VENCIDAS / URGENTES</span><span class="badge br" id="t-ov-b">—</span></div>
+      <div class="pb"><div class="card-list" id="t-over"></div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="pt">🟡 PARA HOY</span><span class="badge ba" id="t-hoy-b">—</span></div>
+      <div class="pb"><div class="card-list" id="t-today"></div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">📅 ESTA SEMANA</span><span class="badge bb" id="t-sem-b">—</span></div>
+    <div class="pb"><div class="card-list" id="t-week"></div></div>
+  </div>
+</section>
+
+<!-- ══ INVENTARIO ══ -->
+<section class="sec" id="s-inventario">
+  <div class="sh"><span class="sh-t">INVENTARIO ESTIMADO</span><div class="sh-l"></div><span class="co co-w">West Texas Blending</span></div>
+  <div class="ks c4">
+    <div class="kpi kg"><div class="kl">Componentes OK</div><div class="kv" id="inv-ok">0</div><div class="kn">sobre nivel mínimo</div></div>
+    <div class="kpi kr"><div class="kl">Nivel Crítico</div><div class="kv" id="inv-cr">0</div><div class="kn">reorder urgente</div></div>
+    <div class="kpi ka"><div class="kl">Nivel Bajo</div><div class="kv" id="inv-lw">0</div><div class="kn">monitorear</div></div>
+    <div class="kpi kb"><div class="kl">Consumo Estimado</div><div class="kv" id="inv-con">—<span class="ku">días</span></div><div class="kn">al ritmo actual</div></div>
+  </div>
+  <div class="g2">
+    <div class="panel">
+      <div class="ph"><span class="pt">NIVELES DE COMPONENTES</span><span class="badge ba" id="inv-al-b">—</span></div>
+      <div class="pb"><div class="gauges" id="inv-gauges"></div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="pt">DETALLE</span></div>
+      <div style="padding:0;">
+        <table class="tbl">
+          <thead><tr><th>Componente</th><th>Nivel</th><th>Stock</th><th>Consumo/día</th><th>Días Restantes</th><th>Estado</th></tr></thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+const DEF = {
+  pozos:[
+    {id:"WTX-01",campo:"Midland Basin",estado:"Activo",psi:2840,bpd:320,quimico:"Frac A",volMes:4820,hora:"08:38",notas:""},
+    {id:"WTX-04",campo:"Midland Basin",estado:"Activo",psi:3120,bpd:415,quimico:"Frac A",volMes:6240,hora:"08:40",notas:""},
+    {id:"WTX-07",campo:"Permian – Delaware",estado:"Activo",psi:2980,bpd:290,quimico:"Compl. B",volMes:4350,hora:"08:35",notas:""},
+    {id:"WTX-09",campo:"Permian – Delaware",estado:"Activo",psi:3045,bpd:380,quimico:"Stim C",volMes:5700,hora:"08:41",notas:""},
+    {id:"WTX-12",campo:"Permian – Delaware",estado:"Alerta",psi:3520,bpd:210,quimico:"Frac A",volMes:3150,hora:"08:41",notas:"Presión +10%"},
+    {id:"WTX-15",campo:"Midland Basin",estado:"Activo",psi:2760,bpd:340,quimico:"Base Oil",volMes:5100,hora:"08:39",notas:""},
+    {id:"WTX-18",campo:"Midland Basin",estado:"Activo",psi:3090,bpd:395,quimico:"Frac A",volMes:5925,hora:"08:37",notas:""},
+    {id:"NM-01",campo:"San Juan Basin",estado:"Mant.",psi:null,bpd:null,quimico:"—",volMes:2100,hora:"05:20",notas:"PM programado"},
+    {id:"NM-03",campo:"San Juan Basin",estado:"Activo",psi:2760,bpd:280,quimico:"Compl. B",volMes:4200,hora:"08:36",notas:""},
+    {id:"NM-06",campo:"Permian – NM",estado:"Activo",psi:2910,bpd:310,quimico:"Stim C",volMes:4650,hora:"08:42",notas:""},
+    {id:"NM-08",campo:"Permian – NM",estado:"Activo",psi:2830,bpd:265,quimico:"Frac A",volMes:3975,hora:"08:40",notas:""},
+    {id:"NM-11",campo:"Permian – NM",estado:"Atención",psi:3280,bpd:190,quimico:"Base Oil",volMes:2850,hora:"08:38",notas:"Monitoreo c/15min"},
+  ],
+  mezclas:[
+    {id:"BL-2238",nombre:"Completion Fluid B",vol:300,ratio:"50/35/15",turno:"Nocturno",estado:"Completada",bbl:300,notas:"Entregada WTX-07"},
+    {id:"BL-2239",nombre:"Frac Fluid A",vol:410,ratio:"60/25/15",turno:"Matutino",estado:"Completada",bbl:410,notas:""},
+    {id:"BL-2240",nombre:"Frac Fluid A",vol:380,ratio:"60/25/15",turno:"Matutino",estado:"En Proceso",bbl:null,notas:""},
+    {id:"BL-2241",nombre:"Completion Fluid B",vol:215,ratio:"50/35/15",turno:"Matutino",estado:"En Proceso",bbl:null,notas:""},
+    {id:"BL-2242",nombre:"Stimulation Mix C",vol:490,ratio:"70/20/10",turno:"Vespertino",estado:"Por Hacer",bbl:null,notas:"Para WTX-09"},
+    {id:"BL-2243",nombre:"Base Oil Mix",vol:300,ratio:"80/20",turno:"Vespertino",estado:"Por Hacer",bbl:null,notas:""},
+    {id:"BL-2244",nombre:"Frac Fluid A",vol:350,ratio:"60/25/15",turno:"Nocturno",estado:"Por Hacer",bbl:null,notas:""},
+  ],
+  inventario:[
+    {nombre:"Base Oil",desc:"Componente #1",nivel:85,stock:4250,unidad:"BBL",consumoDia:480,min:20},
+    {nombre:"Surfactant",desc:"Componente #2",nivel:22,stock:440,unidad:"GAL",consumoDia:180,min:30},
+    {nombre:"Friction Reducer",desc:"Componente #3",nivel:64,stock:1920,unidad:"GAL",consumoDia:220,min:25},
+    {nombre:"Scale Inhibitor",desc:"Componente #4",nivel:91,stock:2730,unidad:"GAL",consumoDia:90,min:20},
+    {nombre:"Biocide",desc:"Componente #5",nivel:47,stock:705,unidad:"GAL",consumoDia:80,min:25},
+  ],
+  tareas:[
+    {id:1,titulo:"Revisar BPV-07 WTX-12",desc:"Presión fuera de rango +12%",prioridad:"Alta",asignado:"L. Smith",vence:"Hoy",estado:"Vencida",rol:"Field"},
+    {id:2,titulo:"Reorden Surfactant",desc:"Nivel crítico 22%",prioridad:"Alta",asignado:"R. Torres",vence:"Hoy",estado:"Vencida",rol:"Plant"},
+    {id:3,titulo:"Inspección Compresor C-02",desc:"Mantenimiento correctivo",prioridad:"Media",asignado:"M. García",vence:"Hoy",estado:"Hoy",rol:"Plant"},
+    {id:4,titulo:"Muestreo QC BL-2241",desc:"Control de calidad rutinario",prioridad:"Media",asignado:"",vence:"Hoy",estado:"Hoy",rol:"Process"},
+    {id:5,titulo:"Monitorear NM-11",desc:"Presión elevada cada 15 min",prioridad:"Media",asignado:"",vence:"Hoy",estado:"Hoy",rol:"Field"},
+    {id:6,titulo:"Actualizar SOP-Q2-012",desc:"Revisión Lab QC",prioridad:"Baja",asignado:"",vence:"Viernes",estado:"Semana",rol:"Process"},
+    {id:7,titulo:"Cotización P-08 Chevron",desc:"Deadline viernes",prioridad:"Alta",asignado:"",vence:"Viernes",estado:"Semana",rol:"Project"},
+    {id:8,titulo:"PM Heat Exchanger HE-1",desc:"Próximo 12 Jul",prioridad:"Media",asignado:"",vence:"Jueves",estado:"Semana",rol:"Plant"},
+  ],
+  comercial:[
+    {cliente:"Chevron Permian",servicio:"Frac Fluid Supply 12 mo",valor:480000,etapa:"Propuesta Enviada",accion:"Follow-up llamada",fecha:"Jun 27",estado:"En Negociación"},
+    {cliente:"Pioneer Natural",servicio:"Chemical Injection Program",valor:320000,etapa:"Cotización",accion:"Enviar propuesta",fecha:"Jun 25",estado:"En Propuesta"},
+    {cliente:"ConocoPhillips NM",servicio:"Scale Inhibitor Contract",valor:195000,etapa:"Reunión Inicial",accion:"Presentación técnica",fecha:"Jul 02",estado:"Prospecto"},
+    {cliente:"Devon Energy TX",servicio:"Completion Fluid Bundle",valor:155000,etapa:"Propuesta Enviada",accion:"Negociación precio",fecha:"Jun 28",estado:"En Negociación"},
+    {cliente:"Colgate Energy",servicio:"Stimulation Mix Pilot",valor:85000,etapa:"Aprobación Interna",accion:"Obtener PO",fecha:"Jun 30",estado:"Cierre"},
+  ],
+  updates:[]
+};
+
+let S = JSON.parse(JSON.stringify(DEF));
+
+async function saveS(){ try{ await window.storage.set('wtb_ops_v3', JSON.stringify(S)); }catch(e){} }
+async function loadS(){ try{ const r=await window.storage.get('wtb_ops_v3'); if(r?.value) S=JSON.parse(r.value); }catch(e){} }
+
+// ── CLOCK ──
+function tick(){
+  const t=new Date().toLocaleTimeString('en-US',{hour12:false,timeZone:'America/Chicago'});
+  document.getElementById('clock').textContent='CT  '+t;
+}
+tick(); setInterval(tick,1000);
+
+// ── TABS ──
+function goTab(id,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('s-'+id).classList.add('on');
+}
+
+// ── UTILS ──
+const fmtN = v => v!=null?Number(v).toLocaleString('en-US'):'—';
+const fmtUSD = v => v?'$'+Number(v).toLocaleString('en-US'):'—';
+const fmt = v => (v===null||v===undefined||v==='')? '—' : v;
+function set(id,v){ const e=document.getElementById(id); if(e) e.innerHTML=v; }
+function pill(s,map){
+  const M=map||{
+    'Activo':'pg','En Proceso':'pf','Completada':'pg','Por Hacer':'pb2','En Espera':'pa',
+    'Alerta':'pr','Atención':'pa','Mant.':'pa','Inactivo':'pr',
+    'En Negociación':'pf','En Propuesta':'pb2','Prospecto':'pa','Cierre':'pg',
+    'Vencida':'pr','Hoy':'pa','Semana':'pb2',
+    'Alta':'pr','Media':'pa','Baja':'pb2'
+  };
+  return `<span class="p ${M[s]||'pb2'}">${s||'—'}</span>`;
+}
+function gcol(pct){ return pct<25?'gfr':pct<50?'gfa':pct<80?'gff':'gfg'; }
+function dotCol(estado){
+  if(estado==='Activo') return 'var(--lime)';
+  if(estado==='Alerta') return 'var(--crimson)';
+  if(estado==='Atención') return 'var(--amber)';
+  return 'var(--smoke)';
+}
+function fillEx(el){ document.getElementById('sms-in').value=el.textContent.trim().replace(/^[📍✅📋💼📦]\s*/,''); }
+
+// ── MAP POSITIONS ──
+const MPOS=[[28,32],[37,48],[50,38],[54,56],[40,66],[45,76],[62,44],[10,42],[16,60],[7,24],[20,68],[13,75]];
+
+function renderMap(cid){
+  const el=document.getElementById(cid); if(!el) return;
+  el.innerHTML='';
+  S.pozos.slice(0,12).forEach((p,i)=>{
+    const pos=MPOS[i]||[50,50];
+    el.innerHTML+=`<div class="mp" style="left:${pos[0]}%;top:${pos[1]}%">
+      <div class="mdot" style="background:${dotCol(p.estado)};box-shadow:0 0 8px ${dotCol(p.estado)};"></div>
+      <div class="mlbl">${p.id} · ${p.psi!=null?p.psi+' psi':'Mant.'}</div></div>`;
+  });
+}
+
+function renderPozos(){
+  renderMap('map-ov'); renderMap('map-loc');
+  const tb=document.getElementById('poz-tbody'); tb.innerHTML='';
+  let actCnt=0,alCnt=0,psiSum=0,psiCnt=0;
+  const fm={};
+  S.pozos.forEach(p=>{
+    if(p.estado==='Activo') actCnt++;
+    if(p.estado==='Alerta') alCnt++;
+    if(p.psi!=null){ psiSum+=p.psi; psiCnt++; }
+    if(p.campo&&p.psi!=null){ if(!fm[p.campo]){fm[p.campo]={s:0,n:0};} fm[p.campo].s+=p.psi; fm[p.campo].n++; }
+    const sc=p.estado==='Alerta'?'style="color:var(--crimson)"':p.estado==='Atención'?'style="color:var(--amber)"':'';
+    tb.innerHTML+=`<tr>
+      <td class="mn">${p.id}</td><td>${p.campo}</td><td>${pill(p.estado)}</td>
+      <td class="mn" ${sc}>${fmt(p.psi)}</td><td class="mn">${fmt(p.bpd)}</td>
+      <td>${p.quimico}</td><td class="mn">${fmtN(p.volMes)}</td>
+      <td class="mn">${p.hora}</td><td style="font-size:10px;color:var(--smoke)">${fmt(p.notas)}</td></tr>`;
+  });
+  const avg=psiCnt?Math.round(psiSum/psiCnt):0;
+  set('ov-inj',actCnt+'/'+S.pozos.length);
+  set('loc-act',actCnt+'<span class="ku">/'+S.pozos.length+'</span>');
+  set('loc-psi',avg.toLocaleString()+'<span class="ku">psi</span>');
+  set('loc-al',alCnt);
+  set('poz-badge',S.pozos.length+' pozos');
+  // field gauges
+  const fg=document.getElementById('fld-g'); fg.innerHTML='';
+  Object.entries(fm).forEach(([c,d])=>{
+    const a=Math.round(d.s/d.n),pct=Math.round(a/3200*100);
+    const col=pct>97?'gfr':pct>93?'gfa':pct>85?'gff':'gfg';
+    fg.innerHTML+=`<div><div class="gh"><span class="gn">${c}</span><span class="gv">${a.toLocaleString()} psi</span></div>
+      <div class="gbar"><div class="gfill ${col}" style="width:${Math.min(pct,100)}%"></div></div></div>`;
+  });
+}
+
+function renderMezclas(){
+  const kmap={Completada:'kn-done','En Proceso':'kn-wip','Por Hacer':'kn-todo','En Espera':'kn-hold'};
+  Object.values(kmap).forEach(id=>{ document.getElementById(id).innerHTML=''; });
+  const cnt={Completada:0,'En Proceso':0,'Por Hacer':0,'En Espera':0};
+  let bblDone=0;
+  S.mezclas.forEach(m=>{
+    cnt[m.estado]=(cnt[m.estado]||0)+1;
+    if(m.estado==='Completada') bblDone+=(m.bbl||m.vol||0);
+    const card=`<div class="mc"><div class="mi">${m.id}</div><div class="mn2">${m.nombre}</div>
+      <div class="mm"><span class="mt">📦 ${m.vol} BBL</span><span class="mt">⚗️ ${m.ratio}</span><span class="mt">🕐 ${m.turno}</span>${m.notas?`<span class="mt">📝 ${m.notas}</span>`:''}</div></div>`;
+    document.getElementById(kmap[m.estado]||'kn-hold').innerHTML+=card;
+  });
+  set('knd',cnt.Completada); set('knw',cnt['En Proceso']); set('knt',cnt['Por Hacer']); set('knh',cnt['En Espera']||0);
+  set('mx-done',cnt.Completada); set('mx-wip',cnt['En Proceso']); set('mx-todo',cnt['Por Hacer']);
+  set('mx-bbl',bblDone+'<span class="ku">BBL</span>');
+  set('ov-mix',cnt.Completada+cnt['En Proceso']);
+  set('ov-mix-n',cnt['En Proceso']+' en proceso · '+cnt['Por Hacer']+' en cola');
+  // empty states
+  if(!cnt.Completada) document.getElementById('kn-done').innerHTML='<div class="empty"><div class="ei">—</div><div class="em">Sin completadas aún</div></div>';
+  if(!cnt['Por Hacer']) document.getElementById('kn-todo').innerHTML='<div class="empty"><div class="ei">✓</div><div class="em">Cola vacía</div></div>';
+}
+
+function renderInventario(){
+  const g=document.getElementById('inv-gauges'); const tb=document.getElementById('inv-tbody');
+  g.innerHTML=''; tb.innerHTML='';
+  let ok=0,cr=0,lw=0,minD=999;
+  S.inventario.forEach(item=>{
+    const dias=item.consumoDia>0?Math.round(item.stock/item.consumoDia):99;
+    if(dias<minD) minD=dias;
+    const est=item.nivel<item.min?'Crítico':item.nivel<item.min*1.5?'Bajo':'OK';
+    if(est==='Crítico') cr++; else if(est==='Bajo') lw++; else ok++;
+    const col=gcol(item.nivel);
+    g.innerHTML+=`<div><div class="gh"><span class="gn">${item.nombre} — ${item.desc}</span><span class="gv">${item.nivel}%  ·  ${fmtN(item.stock)} ${item.unidad}</span></div>
+      <div class="gbar"><div class="gfill ${col}" style="width:${Math.min(item.nivel,100)}%"></div></div></div>`;
+    const ep=est==='Crítico'?'<span class="p pr">Crítico</span>':est==='Bajo'?'<span class="p pa">Bajo</span>':'<span class="p pg">OK</span>';
+    tb.innerHTML+=`<tr>
+      <td><b style="color:var(--white)">${item.nombre}</b><br><span style="font-size:10px;color:var(--smoke)">${item.desc}</span></td>
+      <td class="mn">${item.nivel}%</td><td class="mn">${fmtN(item.stock)} ${item.unidad}</td>
+      <td class="mn">${fmtN(item.consumoDia)}/día</td>
+      <td class="mn" style="${dias<3?'color:var(--crimson)':dias<7?'color:var(--amber)':''}">${dias} días</td>
+      <td>${ep}</td></tr>`;
+  });
+  set('inv-ok',ok); set('inv-cr',cr); set('inv-lw',lw);
+  set('inv-con','~'+minD+'<span class="ku">días</span>');
+  set('inv-al-b',cr>0?cr+' crítico'+(cr>1?'s':''):lw>0?lw+' bajo'+(lw>1?'s':''):'Todo OK');
+}
+
+function renderTareas(){
+  const over=[],hoy=[],sem=[],dn=[];
+  S.tareas.forEach(t=>{ if(t.estado==='Vencida')over.push(t); else if(t.estado==='Hoy')hoy.push(t); else if(t.estado==='Semana')sem.push(t); else if(t.estado==='Completada')dn.push(t); });
+  const c={'Alta':'var(--crimson)','Media':'var(--amber)','Baja':'var(--steel)'};
+  const card=t=>`<div class="ci">
+    <div class="ca" style="background:${c[t.prioridad]||'var(--wire)'}"></div>
+    <div class="cl"><div class="cn">${t.titulo}</div><div class="cm">${t.desc}${t.asignado?' · '+t.asignado:''} · ${t.rol}</div></div>
+    <div class="cr"><div class="cv">${pill(t.prioridad)}</div><div class="cs">${t.vence}</div></div></div>`;
+  ['t-over','t-today','t-week'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=''; });
+  over.forEach(t=>{ const e=document.getElementById('t-over'); if(e) e.innerHTML+=card(t); });
+  hoy.forEach(t=>{ const e=document.getElementById('t-today'); if(e) e.innerHTML+=card(t); });
+  sem.forEach(t=>{ const e=document.getElementById('t-week'); if(e) e.innerHTML+=card(t); });
+  if(!over.length){ const e=document.getElementById('t-over'); if(e) e.innerHTML='<div class="empty"><div class="ei">✅</div><div class="em">Sin tareas vencidas</div></div>'; }
+  if(!hoy.length){ const e=document.getElementById('t-today'); if(e) e.innerHTML='<div class="empty"><div class="ei">📅</div><div class="em">Sin tareas para hoy</div></div>'; }
+  // overview
+  const ov=document.getElementById('ov-tasks-list'); if(ov){ ov.innerHTML=''; over.concat(hoy).slice(0,4).forEach(t=>ov.innerHTML+=card(t)); if(!over.length&&!hoy.length) ov.innerHTML='<div class="empty"><div class="ei">✅</div><div class="em">Sin urgentes</div></div>'; }
+  set('t-ov',over.length); set('t-hoy',hoy.length); set('t-sem',sem.length); set('t-dn',dn.length);
+  set('ov-tasks',over.length+hoy.length+sem.length); set('ov-tasks-n',over.length+' vencidas');
+  set('t-ov-b',over.length+' tareas'); set('t-hoy-b',hoy.length+' tareas'); set('t-sem-b',sem.length+' tareas');
+  set('urg-badge',over.length+hoy.length+' urgentes');
+}
+
+function renderComercial(){
+  const tb=document.getElementById('com-tbody'); tb.innerHTML='';
+  let tot=0,prop=0,fw=0;
+  S.comercial.forEach(p=>{
+    tot+=p.valor||0;
+    if(p.etapa==='Propuesta Enviada') prop++;
+    if(p.estado==='En Negociación') fw++;
+    tb.innerHTML+=`<tr>
+      <td><b style="color:var(--white)">${p.cliente}</b></td><td>${p.servicio}</td>
+      <td class="mn">${fmtUSD(p.valor)}</td><td>${p.etapa}</td>
+      <td style="font-size:11px;color:var(--smoke)">${p.accion}</td>
+      <td class="mn">${p.fecha}</td><td>${pill(p.estado)}</td></tr>`;
+  });
+  const m=(tot/1e6).toFixed(1);
+  set('com-tot',S.comercial.length); set('com-val','$'+m+'<span class="ku">M</span>');
+  set('com-prop',prop); set('com-fw',fw);
+  set('com-badge',S.comercial.length+' Activos');
+  set('ov-com',S.comercial.length);
+}
+
+function renderUpdates(){
+  const h=document.getElementById('upd-hist');
+  if(!S.updates.length){ h.innerHTML='<div class="empty"><div class="ei">💬</div><div class="em">Envía tu primer mensaje</div></div>'; return; }
+  h.innerHTML='';
+  [...S.updates].reverse().forEach(u=>{ h.innerHTML+=`<div class="ur"><div class="ut">${u.time}</div><div class="ux">${u.summary}</div></div>`; });
+  set('upd-badge',S.updates.length+' hoy');
+}
+
+function updateTicker(){
+  const items=[];
+  S.pozos.filter(p=>p.estado==='Alerta'||p.estado==='Atención').forEach(p=>items.push(`⚠ ${p.id} · ${p.psi||'?'} psi · ${p.estado.toUpperCase()}`));
+  S.mezclas.filter(m=>m.estado==='En Proceso').forEach(m=>items.push(`🔀 ${m.id} ${m.nombre.toUpperCase()} · EN PROCESO`));
+  S.inventario.filter(i=>i.nivel<i.min).forEach(i=>items.push(`📦 ${i.nombre.toUpperCase()} ${i.nivel}% · NIVEL CRÍTICO`));
+  S.tareas.filter(t=>t.estado==='Vencida').forEach(t=>items.push(`⏰ TAREA VENCIDA: ${t.titulo.toUpperCase()}`));
+  S.comercial.filter(p=>p.estado==='Cierre').forEach(p=>items.push(`💼 CIERRE PRÓXIMO: ${p.cliente.toUpperCase()}`));
+  if(!items.length) items.push('✅ TODOS LOS SISTEMAS NOMINALES');
+  const d=[...items,...items];
+  document.getElementById('ticker').innerHTML=d.map(i=>`<span class="ti">${i}</span><span class="ts">|</span>`).join('');
+}
+
+function renderAll(){
+  renderPozos(); renderMezclas(); renderInventario();
+  renderTareas(); renderComercial(); renderUpdates();
+  updateTicker();
+}
+
+// ══════════════════════════════
+// SMS / IA UPDATE
+// ══════════════════════════════
+async function sendSMS(){
+  const inp=document.getElementById('sms-in');
+  const btn=document.getElementById('sms-btn');
+  const st=document.getElementById('sms-st');
+  const msg=inp.value.trim();
+  if(!msg){ st.textContent='⚠ Escribe un mensaje primero.'; st.className='sms-st err'; return; }
+  btn.disabled=true; st.textContent='Procesando con IA…'; st.className='sms-st load';
+
+  const SYS=`Eres el sistema de actualización de un dashboard operacional para West Texas Blending y Q2 Technologies.
+El usuario manda mensajes cortos (como SMS/WhatsApp) con actualizaciones de campo en español.
+Analiza el mensaje y devuelve SOLO JSON válido, sin texto adicional, sin backticks, sin explicaciones.
+
+Estado actual resumido:
+Pozos: ${JSON.stringify(S.pozos.map(p=>({id:p.id,estado:p.estado,psi:p.psi})))}
+Mezclas: ${JSON.stringify(S.mezclas.map(m=>({id:m.id,nombre:m.nombre,estado:m.estado})))}
+Inventario: ${JSON.stringify(S.inventario.map(i=>({nombre:i.nombre,nivel:i.nivel,stock:i.stock,unidad:i.unidad})))}
+Tareas: ${JSON.stringify(S.tareas.map(t=>({id:t.id,titulo:t.titulo,estado:t.estado})))}
+Comercial: ${JSON.stringify(S.comercial.map(c=>({cliente:c.cliente,estado:c.estado})))}
+
+Formato de respuesta:
+{"summary":"Resumen 1 línea","updates":{"pozos":[{"id":"WTX-01","estado":"Activo","psi":2840,"bpd":320,"quimico":"Frac A","volMes":4820,"hora":"HH:MM","notas":""}],"mezclas":[{"id":"BL-2240","nombre":"...","vol":380,"ratio":"60/25/15","turno":"Matutino","estado":"Completada","bbl":380,"notas":""}],"inventario":[{"nombre":"Surfactant","nivel":65,"stock":1300,"unidad":"GAL","consumoDia":180,"min":30}],"tareas_add":[{"titulo":"...","desc":"...","prioridad":"Alta","asignado":"","vence":"Hoy","estado":"Hoy","rol":"Field"}],"tareas_done":[1],"comercial_add":[{"cliente":"...","servicio":"...","valor":0,"etapa":"Propuesta Enviada","accion":"...","fecha":"...","estado":"En Propuesta"}]}}
+Solo incluye los arrays que cambian. Estados pozos: Activo/Alerta/Atención/Mant./Inactivo. Estados mezclas: Completada/En Proceso/Por Hacer/En Espera. Estados tareas: Vencida/Hoy/Semana/Completada. Prioridad: Alta/Media/Baja.`;
+
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:SYS,messages:[{role:"user",content:msg}]})
+    });
+    const data=await r.json();
+    const raw=data.content?.[0]?.text||'';
+    let parsed;
+    try{ parsed=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch(e){ throw new Error('Respuesta inesperada. Intenta de nuevo.'); }
+    apply(parsed,msg);
+    inp.value='';
+    st.textContent='✓ '+parsed.summary;
+    st.className='sms-st ok';
+  } catch(e){
+    st.textContent='⚠ '+e.message;
+    st.className='sms-st err';
+  }
+  btn.disabled=false;
+}
+
+function apply(parsed, original){
+  const u=parsed.updates||{};
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false,timeZone:'America/Chicago'}).slice(0,5);
+  if(u.pozos?.length) u.pozos.forEach(upd=>{ const i=S.pozos.findIndex(p=>p.id===upd.id); if(i>=0) Object.assign(S.pozos[i],upd); else S.pozos.push(upd); });
+  if(u.mezclas?.length) u.mezclas.forEach(upd=>{ const i=S.mezclas.findIndex(m=>m.id===upd.id); if(i>=0) Object.assign(S.mezclas[i],upd); else S.mezclas.push(upd); });
+  if(u.inventario?.length) u.inventario.forEach(upd=>{ const i=S.inventario.findIndex(x=>x.nombre===upd.nombre); if(i>=0) Object.assign(S.inventario[i],upd); else S.inventario.push(upd); });
+  if(u.tareas_add?.length){ const maxId=S.tareas.reduce((m,t)=>Math.max(m,t.id),0); u.tareas_add.forEach((t,i)=>S.tareas.push({...t,id:maxId+i+1})); }
+  if(u.tareas_done?.length) u.tareas_done.forEach(id=>{ const t=S.tareas.find(t=>t.id===id); if(t) t.estado='Completada'; });
+  if(u.comercial_add?.length) u.comercial_add.forEach(p=>S.comercial.push(p));
+  S.updates.push({time:now,msg:original,summary:parsed.summary});
+  renderAll();
+  saveS();
+}
+
+// ── INIT ──
+(async()=>{ await loadS(); renderAll(); })();
+</script>
+</body>
+</html>
